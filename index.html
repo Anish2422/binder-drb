@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Binder: record review for Dispute Resolution Boards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F3F4F1; --sheet:#FFFFFF; --ink:#1D2A3A; --graphite:#5A6370; --rule:#D3D7D1;
+  --hl:#FFE36E; --hl-soft:rgba(255,227,110,.55); --red:#A8261B; --red-soft:#F8E3E0;
+  --green:#2D6A3E; --green-soft:#E1EEE3; --amber:#8A5A00; --amber-soft:#F6EBD3;
+  --blue:#24527A; --blue-soft:#E2EAF2; --focus:#24527A;
+  --ui:"Libre Franklin", "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif;
+  --doc:"Source Serif 4", Georgia, "Times New Roman", serif;
+  --fs:17px;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#151B23; --sheet:#1D252F; --ink:#E5E8E3; --graphite:#A2AAB4; --rule:#36414D;
+    --hl:#7A6814; --hl-soft:rgba(160,135,25,.45); --red:#F08A7E; --red-soft:#3A2220;
+    --green:#8CC79A; --green-soft:#1F3326; --amber:#E2B65A; --amber-soft:#3A2F17;
+    --blue:#9CC0E4; --blue-soft:#1E2E40; --focus:#9CC0E4;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#151B23; --sheet:#1D252F; --ink:#E5E8E3; --graphite:#A2AAB4; --rule:#36414D;
+  --hl:#7A6814; --hl-soft:rgba(160,135,25,.45); --red:#F08A7E; --red-soft:#3A2220;
+  --green:#8CC79A; --green-soft:#1F3326; --amber:#E2B65A; --amber-soft:#3A2F17;
+  --blue:#9CC0E4; --blue-soft:#1E2E40; --focus:#9CC0E4;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px);font-size:var(--fs)}
+body{margin:0;min-height:100%;background:var(--paper);color:var(--ink);font-family:var(--ui);font-size:1rem;line-height:1.5}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+a{color:var(--blue)}
+img{max-width:100%}
+
+/* ---------- header ---------- */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--sheet);border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:1rem;padding:.6rem 1.25rem}
+.mark{display:flex;align-items:baseline;gap:.6rem;min-width:0}
+.mark b{font-size:1.25rem;font-weight:700;letter-spacing:-.01em}
+.mark span{color:var(--graphite);font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tools{margin-left:auto;display:flex;gap:.4rem;align-items:center}
+.tbtn{border:1px solid var(--rule);background:var(--sheet);border-radius:6px;padding:.35rem .7rem;font-size:.85rem}
+.tbtn:hover{border-color:var(--graphite)}
+.tbtn[aria-pressed="true"]{background:var(--blue-soft);border-color:var(--blue)}
+
+/* ---------- shell ---------- */
+.shell{display:grid;grid-template-columns:15.5rem 1fr;min-height:calc(100vh - 3.4rem)}
+.rail{border-right:1px solid var(--rule);padding:1.25rem 0;background:var(--paper)}
+.rail nav{position:sticky;top:4.4rem}
+.rail ol{list-style:none;margin:0;padding:0}
+.rail li button{display:flex;gap:.75rem;width:100%;text-align:left;border:0;background:none;padding:.7rem 1.25rem;border-left:4px solid transparent;font-size:.95rem}
+.rail li button:hover{background:var(--sheet)}
+.rail li button[aria-current="page"]{border-left-color:var(--ink);background:var(--sheet);font-weight:600}
+.rail .n{color:var(--graphite);font-variant-numeric:tabular-nums;min-width:1.1rem}
+.rail .sub{display:block;font-size:.8rem;color:var(--graphite);font-weight:400}
+.rail hr{border:0;border-top:1px solid var(--rule);margin:1rem 1.25rem}
+main{padding:1.75rem 2rem 4rem;min-width:0}
+.view{max-width:72rem}
+.view[hidden]{display:none}
+h1{font-family:var(--doc);font-weight:600;font-size:2rem;line-height:1.2;margin:0 0 .4rem;max-width:40ch}
+h2{font-size:1.2rem;margin:0 0 .75rem;font-weight:600}
+h3{font-size:1rem;margin:0 0 .4rem;font-weight:600}
+.lede{font-family:var(--doc);font-size:1.12rem;line-height:1.6;max-width:62ch;color:var(--ink)}
+.muted{color:var(--graphite)}
+.small{font-size:.85rem}
+
+/* ---------- overview ---------- */
+.caption{border:1px solid var(--rule);background:var(--sheet);padding:1.5rem 1.75rem;border-radius:4px;margin-bottom:1.75rem}
+.caption .parties{font-family:var(--doc);color:var(--graphite);margin:.2rem 0 0}
+.tally{display:grid;gap:.6rem;margin:1.25rem 0 2rem;max-width:44rem}
+.tally button{display:grid;grid-template-columns:2.5rem 1fr auto;align-items:center;gap:.9rem;border:1px solid var(--rule);background:var(--sheet);border-radius:6px;padding:.8rem 1rem;text-align:left}
+.tally button:hover{border-color:var(--graphite)}
+.tally .count{font-family:var(--doc);font-size:1.6rem;font-weight:600;text-align:center}
+.tally .go{color:var(--blue);font-size:.9rem}
+.c-red{color:var(--red)} .c-amber{color:var(--amber)} .c-green{color:var(--green)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:1.25rem;margin-top:.5rem}
+.cols div{border-top:2px solid var(--ink);padding-top:.75rem}
+.cols p{margin:.3rem 0 0;color:var(--graphite);font-size:.92rem}
+.principle{margin-top:2.5rem;font-family:var(--doc);font-size:1.05rem;border-left:4px solid var(--hl);padding:.25rem 0 .25rem 1rem;max-width:60ch}
+
+/* ---------- filters ---------- */
+.bar{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin:1rem 0 1.25rem}
+.chip{border:1px solid var(--rule);background:var(--sheet);border-radius:999px;padding:.3rem .85rem;font-size:.85rem}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--sheet);border-color:var(--ink)}
+.sep{width:1px;height:1.4rem;background:var(--rule);margin:0 .3rem}
+
+/* ---------- findings split ---------- */
+.split{display:grid;grid-template-columns:minmax(17rem,24rem) 1fr;gap:1.5rem;align-items:start}
+.flist{list-style:none;margin:0;padding:0;border:1px solid var(--rule);background:var(--sheet);border-radius:4px;max-height:calc(100vh - 13rem);overflow:auto}
+.flist li+li{border-top:1px solid var(--rule)}
+.flist button{display:block;width:100%;text-align:left;background:none;border:0;padding:.85rem 1rem;border-left:4px solid transparent}
+.flist button[aria-selected="true"]{background:var(--blue-soft);border-left-color:var(--blue)}
+.flist .who{font-size:.8rem;color:var(--graphite)}
+.flist .what{display:block;font-size:.93rem;margin-top:.15rem}
+.tag{display:inline-block;font-size:.75rem;font-weight:600;padding:.1rem .5rem;border-radius:3px;margin-top:.35rem}
+.t-conflict{background:var(--red-soft);color:var(--red)}
+.t-missing{background:var(--amber-soft);color:var(--amber)}
+.t-ok{background:var(--green-soft);color:var(--green)}
+.detail{background:var(--sheet);border:1px solid var(--rule);border-radius:4px;padding:1.5rem 1.75rem}
+.detail .head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.5rem;align-items:baseline;margin-bottom:1rem}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+.pane h3{font-size:.85rem;color:var(--graphite);font-weight:600}
+.quote{font-family:var(--doc);font-size:1.02rem;line-height:1.65;margin:0;padding:.9rem 1rem;border:1px solid var(--rule);border-radius:3px;background:var(--paper)}
+.quote .src{display:block;font-family:var(--ui);font-size:.8rem;color:var(--graphite);margin-top:.6rem}
+mark{background:linear-gradient(transparent 12%,var(--hl-soft) 12%,var(--hl-soft) 88%,transparent 88%);color:inherit;padding:0 .1em}
+mark.redline{background:none;text-decoration:underline wavy var(--red);text-underline-offset:3px;color:var(--red);font-weight:600}
+del.redline{color:var(--red)}
+.verify{display:flex;gap:.5rem;align-items:center;font-size:.82rem;margin-top:.5rem}
+.verify .dot{width:.6rem;height:.6rem;border-radius:50%}
+.note{margin-top:1.25rem;font-size:.95rem;max-width:68ch}
+.calc{font-family:var(--doc);background:var(--paper);border:1px dashed var(--rule);padding:.6rem .9rem;margin-top:.75rem;border-radius:3px;font-variant-numeric:tabular-nums}
+.linkbtn{background:none;border:0;padding:0;color:var(--blue);text-decoration:underline;text-underline-offset:2px;font-size:inherit}
+.actions{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.25rem}
+.btn{border:1px solid var(--ink);background:var(--sheet);border-radius:6px;padding:.45rem .9rem;font-size:.9rem;font-weight:500}
+.btn.primary{background:var(--ink);color:var(--sheet)}
+.btn:hover{filter:brightness(1.05)}
+
+/* ---------- chronology ---------- */
+.tablewrap{overflow-x:auto;border:1px solid var(--rule);border-radius:4px;background:var(--sheet)}
+table{border-collapse:collapse;width:100%;min-width:46rem}
+th,td{text-align:left;vertical-align:top;padding:.7rem .9rem;border-bottom:1px solid var(--rule);font-size:.93rem}
+th{font-size:.82rem;color:var(--graphite);font-weight:600;background:var(--paper)}
+td.date{white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:500}
+td.ev{font-family:var(--doc);font-size:1rem}
+tr.claimed td{background:var(--red-soft)}
+tr.claimed td.ev{font-style:italic}
+.legend{display:flex;gap:1.25rem;flex-wrap:wrap;font-size:.85rem;color:var(--graphite);margin:.75rem 0 1rem}
+.legend i{display:inline-block;width:.9rem;height:.9rem;vertical-align:-.1rem;margin-right:.35rem;border-radius:2px}
+
+/* ---------- questions ---------- */
+.qgroup{margin-bottom:2rem}
+.qgroup h2{border-bottom:2px solid var(--ink);padding-bottom:.4rem}
+.q{background:var(--sheet);border:1px solid var(--rule);border-radius:4px;padding:1rem 1.25rem;margin-top:.75rem}
+.q.dropped{opacity:.55}
+.q p{font-family:var(--doc);font-size:1.05rem;line-height:1.6;margin:0}
+.q .basis{font-size:.85rem;color:var(--graphite);margin-top:.5rem}
+.q .row{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;margin-top:.75rem}
+.q label{font-size:.85rem;color:var(--graphite);display:block;margin-top:.75rem}
+.q textarea{width:100%;min-height:3.2rem;font-family:var(--doc);font-size:1rem;border:1px solid var(--rule);border-radius:3px;padding:.5rem .65rem;background:var(--paper);color:var(--ink);margin-top:.3rem;resize:vertical}
+
+/* ---------- report ---------- */
+.rgrid{display:grid;grid-template-columns:1fr 21rem;gap:1.5rem;align-items:start}
+.section-tabs{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1rem}
+.draft{background:var(--sheet);border:1px solid var(--rule);border-radius:4px;padding:1.5rem 1.75rem}
+.contrib{border-left:3px solid var(--rule);padding:.25rem 0 .25rem 1rem;margin:0 0 1.25rem}
+.contrib .by{font-size:.8rem;color:var(--graphite);margin-bottom:.35rem}
+.contrib p{font-family:var(--doc);font-size:1.05rem;line-height:1.7;margin:0 0 .6rem;max-width:68ch}
+.flag-inline{background:var(--red-soft);border-bottom:2px solid var(--red)}
+.changed{animation:flash 1.6s ease-out}
+@keyframes flash{from{background:var(--hl)}to{background:transparent}}
+@media (prefers-reduced-motion: reduce){.changed{animation:none;background:var(--hl-soft)}}
+.empty{border:1px dashed var(--rule);border-radius:4px;padding:1.5rem;font-family:var(--doc);color:var(--graphite)}
+.checks{background:var(--sheet);border:1px solid var(--rule);border-radius:4px;padding:1.1rem 1.25rem;position:sticky;top:4.6rem}
+.checks h2{font-size:1.05rem}
+.check{border-top:1px solid var(--rule);padding:.8rem 0}
+.check:first-of-type{border-top:0}
+.check p{margin:.2rem 0 .5rem;font-size:.9rem}
+.check.done{opacity:.6}
+.check.done .state{color:var(--green)}
+.state{font-size:.78rem;font-weight:600}
+.cov{list-style:none;margin:.4rem 0 0;padding:0;font-size:.86rem}
+.cov li{display:flex;gap:.5rem;padding:.2rem 0}
+.cov .s{width:1.1rem;flex:none;text-align:center;font-weight:700}
+
+/* ---------- case ---------- */
+.prose{font-family:var(--doc);font-size:1.05rem;line-height:1.7;max-width:64ch}
+.prose h2{font-family:var(--ui)}
+.prose ul{padding-left:1.2rem}
+.disclose{background:var(--sheet);border:1px solid var(--rule);border-radius:4px;padding:1rem 1.25rem;font-family:var(--doc);max-width:64ch}
+
+/* ---------- drawer ---------- */
+.drawer{position:fixed;inset:0;z-index:50;display:none}
+.drawer.open{display:block}
+.drawer .scrim{position:absolute;inset:0;background:rgba(10,15,20,.45)}
+.drawer .panel{position:absolute;top:0;right:0;bottom:0;width:min(36rem,100%);background:var(--sheet);border-left:1px solid var(--rule);padding:calc(1.25rem + env(safe-area-inset-top,0px)) 1.5rem calc(1.5rem + env(safe-area-inset-bottom,0px));overflow:auto}
+.drawer .doc{font-family:var(--doc);font-size:1.05rem;line-height:1.75;white-space:pre-wrap}
+.toast{position:fixed;left:50%;bottom:calc(1.25rem + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--sheet);padding:.6rem 1rem;border-radius:6px;font-size:.9rem;z-index:60;display:none}
+footer.fine{margin-top:3rem;color:var(--graphite);font-size:.82rem;max-width:64ch}
+
+/* ---------- responsive ---------- */
+@media (max-width: 960px){
+  .shell{grid-template-columns:1fr}
+  .rail{border-right:0;border-bottom:1px solid var(--rule);padding:.25rem 0;overflow-x:auto}
+  .rail nav{position:static;display:flex}
+  .rail ol{display:flex}
+  .rail li button{border-left:0;border-bottom:3px solid transparent;white-space:nowrap;padding:.6rem .9rem}
+  .rail li button[aria-current="page"]{border-bottom-color:var(--ink)}
+  .rail .sub,.rail hr{display:none}
+  main{padding:1.25rem 1rem 3rem}
+  .split,.rgrid,.pair{grid-template-columns:1fr}
+  .flist{max-height:none}
+  .checks{position:static}
+  .mark span{display:none}
+}
+
+/* ---------- print ---------- */
+@media print{
+  .top,.rail,.bar,.actions,.tools,.drawer,.toast,.q .row,.checks button,.section-tabs{display:none!important}
+  .shell{display:block} main{padding:0}
+  body{background:#fff;color:#000;font-size:11pt}
+  .view[hidden]{display:none!important}
+  .detail,.draft,.q,.checks,.caption{border:1px solid #999;break-inside:avoid}
+  body.print-kept .q[data-kept="false"]{display:none!important}
+  .q textarea{border:1px solid #999;min-height:4rem;background:#fff}
+  .split{display:block} .flist{display:none}
+  mark{background:#fff3a8!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="mark"><b>Binder</b><span>SR-47 Coldwater Creek Bridge, Dispute 3</span></div>
+  <div class="tools">
+    <button class="tbtn" id="smaller" aria-label="Smaller text">A−</button>
+    <button class="tbtn" id="larger" aria-label="Larger text">A+</button>
+    <button class="tbtn" id="printBtn">Print this page</button>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="rail">
+    <nav aria-label="Sections">
+      <ol>
+        <li><button data-go="overview" aria-current="page"><span class="n"></span><span>Case summary</span></button></li>
+        <li><button data-go="record"><span class="n">1</span><span>The record</span></button></li>
+        <li><button data-go="papers"><span class="n">2</span><span>Position papers</span></button></li>
+        <li><button data-go="questions"><span class="n">3</span><span>Meeting questions</span></button></li>
+        <li><button data-go="report"><span class="n">4</span><span>Report draft</span></button></li>
+      </ol>
+      <hr>
+      <ol>
+        <li><button data-go="case"><span class="n"></span><span>Confidentiality</span></button></li>
+      </ol>
+    </nav>
+  </aside>
+
+  <main id="main">
+
+    <!-- ================= OVERVIEW ================= -->
+    <section class="view" id="v-overview">
+      <div class="caption">
+        <h1>Dispute 3: Differing site conditions at the Pier 2 drilled shafts</h1>
+        <p class="parties">SR-47 Coldwater Creek Bridge Replacement, Contract TV-2024-118. Tri-Valley Transportation Authority and Brennan-Halstead Constructors, Inc. Entitlement only.</p>
+      </div>
+
+      <p class="lede">Binder checked both position papers against the record. Each finding shows the exact passage it relies on. It does not weigh the merits or suggest an outcome.</p>
+
+      <div class="tally">
+        <button data-jump="conflict"><span class="count c-red">8</span><span>statements conflict with the record, misquote it, or don't add up</span><span class="go">Review</span></button>
+        <button data-jump="missing"><span class="count c-amber">2</span><span>cite documents that aren't in the referral package</span><span class="go">Review</span></button>
+        <button data-jump="ok"><span class="count c-green">5</span><span>checked and consistent with the record</span><span class="go">Review</span></button>
+      </div>
+
+      <div class="actions"><button class="btn primary" data-next="record">Start with the record</button></div>
+
+      <footer class="fine">Interface prototype on a fictional case. The findings shown here were prepared by hand to demonstrate how the finished tool will present its checks. Names, documents and data are invented.</footer>
+    </section>
+
+    <!-- ================= RECORD ================= -->
+    <section class="view" id="v-record" hidden>
+      <h1>The record</h1>
+      <p class="lede">Key events, each linked to its source document. Red rows are claims with no document behind them.</p>
+      <div class="legend"><span><i style="background:var(--sheet);border:1px solid var(--rule)"></i>Documented in the record</span><span><i style="background:var(--red-soft)"></i>Stated in a position paper, no supporting document</span></div>
+      <div class="tablewrap"><table>
+        <thead><tr><th scope="col">Date</th><th scope="col">Event</th><th scope="col">Source</th><th scope="col">Relevance</th></tr></thead>
+        <tbody id="chronoBody"></tbody>
+      </table></div>
+      <h2 style="margin-top:2rem">Distances from the plans</h2>
+      <p class="muted" style="max-width:64ch">Computed from the stations on Plan Sheet G-1, since both papers rely on how far the borings are from Pier 2 (Station 13+10).</p>
+      <div class="tablewrap"><table style="min-width:34rem">
+        <thead><tr><th>Boring</th><th>Station</th><th>Distance from Pier 2 along alignment</th><th>Boulders noted in log</th></tr></thead>
+        <tbody>
+          <tr><td>B-2</td><td>12+05</td><td>105 ft</td><td>No</td></tr>
+          <tr><td>B-3</td><td>12+85, 8 ft Lt</td><td>25 ft (about 26 ft with offset)</td><td>No</td></tr>
+          <tr><td>B-4</td><td>15+05, 12 ft Rt</td><td>195 ft</td><td>Yes, to 24 in.</td></tr>
+        </tbody>
+      </table></div>
+    <div class="actions" style="margin-top:2rem"><button class="btn primary" data-next="papers">Next: position papers</button></div>
+    </section>
+
+    <!-- ================= PAPERS ================= -->
+    <section class="view" id="v-papers" hidden>
+      <h1>Position papers</h1>
+      <p class="lede">Pick a statement to compare it with the record.</p>
+      <div class="bar" role="group" aria-label="Filter statements">
+        <button class="chip" data-f="all" aria-pressed="true">All 15</button>
+        <button class="chip" data-f="conflict" aria-pressed="false">Conflicts with record</button>
+        <button class="chip" data-f="missing" aria-pressed="false">Not in the package</button>
+        <button class="chip" data-f="ok" aria-pressed="false">Consistent</button>
+        <span class="sep" aria-hidden="true"></span>
+        <button class="chip" data-p="all" aria-pressed="true">Both papers</button>
+        <button class="chip" data-p="Contractor" aria-pressed="false">Contractor</button>
+        <button class="chip" data-p="Owner" aria-pressed="false">Owner</button>
+      </div>
+      <div class="split">
+        <ul class="flist" id="flist" role="listbox" aria-label="Statements"></ul>
+        <article class="detail" id="fdetail" aria-live="polite"></article>
+      </div>
+    <div class="actions" style="margin-top:2rem"><button class="btn primary" data-next="questions">Next: meeting questions</button></div>
+    </section>
+
+    <!-- ================= QUESTIONS ================= -->
+    <section class="view" id="v-questions" hidden>
+      <h1>Meeting questions</h1>
+      <p class="lede">Keep the questions you want to ask. After the meeting, note what you heard.</p>
+      <div class="actions" style="margin:0 0 1.5rem"><button class="btn" id="printKept">Print kept questions</button></div>
+      <div id="qwrap"></div>
+    <div class="actions" style="margin-top:2rem"><button class="btn primary" data-next="report">Next: report draft</button></div>
+    </section>
+
+    <!-- ================= REPORT ================= -->
+    <section class="view" id="v-report" hidden>
+      <h1>Report draft</h1>
+      <p class="lede">All three members' drafts in one place. Binder checks facts, terms and dates. The wording stays yours.</p>
+      <div class="section-tabs" role="tablist" aria-label="Report sections">
+        <button class="chip" role="tab" data-sec="facts" aria-pressed="true">Findings of fact</button>
+        <button class="chip" role="tab" data-sec="analysis" aria-pressed="false">Analysis</button>
+        <button class="chip" role="tab" data-sec="rec" aria-pressed="false">Recommendation</button>
+      </div>
+      <div class="rgrid">
+        <div class="draft" id="draft"></div>
+        <aside class="checks" id="checks" aria-label="Checks on this draft"></aside>
+      </div>
+    <div class="actions" style="margin-top:2rem"><button class="btn primary" data-next="case">Next: confidentiality</button></div>
+    </section>
+
+    <!-- ================= CASE ================= -->
+    <section class="view" id="v-case" hidden>
+      <div class="prose">
+        <h1>Confidentiality and AI use</h1>
+        <p>Board members are bound to keep project information confidential, and the DRBF's guidance on AI asks Boards to protect confidentiality, review every output, keep decisions their own, and be open with the parties about how AI was used. Binder is built around those four points.</p>
+        <h2>How case documents are handled</h2>
+        <ul>
+          <li>Each case is a separate private workspace. Documents are not shared across cases or users.</li>
+          <li>Documents are processed only under terms that prohibit using them to train any model.</li>
+          <li>The Board can delete a case and all of its documents at any time.</li>
+          <li>Nothing is sent to a public chat service.</li>
+        </ul>
+        <h2>What Binder does and doesn't do</h2>
+        <ul>
+          <li>It checks statements and citations against the record, builds the chronology, suggests questions, and checks the draft for consistency.</li>
+          <li>It does not evaluate entitlement, predict an outcome, or draft findings, analysis or recommendations.</li>
+        </ul>
+        <h2>Disclosure to the parties</h2>
+        <p>A plain statement the Board can include in its report or read at the meeting, if it chooses to disclose:</p>
+        <div class="disclose" id="discText">The Board used a document review tool to check citations and factual statements in the parties' submissions against the record, to assemble a chronology, and to check the consistency of terms and dates in its draft. The tool did not evaluate the merits. All findings, analysis and recommendations are the Board's own.</div>
+        <div class="actions"><button class="btn" id="copyDisc">Copy statement</button></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="drawer" id="drawer" aria-hidden="true">
+  <div class="scrim" data-close></div>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+    <div style="display:flex;justify-content:space-between;align-items:start;gap:1rem">
+      <div><h2 id="dTitle" style="margin:0"></h2><p class="muted small" id="dMeta" style="margin:.2rem 0 1rem"></p></div>
+      <button class="tbtn" data-close>Close</button>
+    </div>
+    <div class="doc" id="dBody"></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ===================== RECORD SOURCES ===================== */
+const SRC = {
+  GC105b:{t:"GC 1.05(b) Contract Documents and Reference Information",m:"General Conditions",x:"The Geotechnical Data Report (GDR) is furnished for the Contractor's information. The factual boring logs and laboratory test results contained in the GDR are incorporated into the Plans as Sheets G-1 through G-4 and are Contract Documents. Interpretations, opinions and recommendations in the GDR narrative are not Contract Documents."},
+  GC108:{t:"GC 1.08 Examination of Site and Contract Documents",m:"General Conditions",x:"The Contractor shall examine the site and the Contract Documents before submitting a bid. Submission of a bid is conclusive evidence that the Contractor has made such examination and is satisfied as to the conditions reasonably ascertainable from a site visit and review of the information made available by the Owner. This obligation does not require the Contractor to perform subsurface investigations."},
+  GC403a:{t:"GC 4.03(a) Differing Site Conditions",m:"General Conditions",x:"The Contractor shall notify the Engineer in writing, promptly and before the conditions are disturbed, of (1) subsurface or latent physical conditions at the site which differ materially from those indicated in the Contract, or (2) unknown physical conditions at the site of an unusual nature, which differ materially from those ordinarily encountered and generally recognized as inhering in work of the character provided for in the Contract."},
+  GC404:{t:"GC 4.04 Notice of Potential Claim",m:"General Conditions",x:"Written notice under GC 4.03 shall be given no later than five (5) working days after the Contractor first encounters the condition. No adjustment shall be allowed for costs incurred more than five (5) working days before written notice is given, unless the Engineer had actual knowledge of the condition and the Owner was not prejudiced by the lack of written notice."},
+  SP2064:{t:"SP 206.4 Drilled Shafts, Obstructions",m:"Special Provisions",x:"An obstruction is any object encountered within the shaft excavation that cannot be removed or advanced through using conventional drilling tools (earth augers, rock augers, cleanout buckets and core barrels) operated by drilling equipment of the size and torque required by SP 206.2. Cobbles, gravel, and boulders less than 18 inches in maximum dimension shall not be considered obstructions. Removal of obstructions will be paid as extra work."},
+  B3:{t:"Boring B-3",m:"Plan Sheet G-1 to G-4, boring log summary",x:"Boring B-3. Station 12+85, 8 ft Lt. Nearest structure: Pier 2. Alluvium (approx. El. 438 to 405): Dense sand and gravel with occasional cobbles; no boulders noted; siltstone at El. 403.5. Groundwater: El. 430."},
+  B4:{t:"Boring B-4",m:"Plan Sheet G-1 to G-4, boring log summary",x:"Boring B-4. Station 15+05, 12 ft Rt. Nearest structure: Abutment 4. Alluvium (approx. El. 438 to 405): Dense sand, gravel, cobbles and occasional boulders to 24 in.; siltstone at El. 406. Groundwater: El. 432."},
+  PIER2:{t:"Project summary: Pier 2",m:"Record, A-1",x:"Foundations at issue. Pier 2: four 72-inch diameter drilled shafts, plan tip elevation 402.0 ft, at Station 13+10."},
+  GN6:{t:"Plan Sheet G-1, General Note 6",m:"Plans",x:"Cobbles and boulders may be encountered in alluvial deposits throughout the project limits."},
+  GDR52:{t:"GDR narrative, Section 5.2",m:"Not a Contract Document per GC 1.05(b)",x:"Based on regional experience, the alluvium in the Coldwater Creek valley is known to contain boulders. Drilled shaft contractors should anticipate the need for tools capable of removing boulders."},
+  ADD3:{t:"Addendum No. 3, Question 14",m:"Issued July 22, 2024",x:"Q: Does the Authority have any information on boulders at Piers 2 and 3 beyond the boring logs provided?\nA: No additional information is available. Bidders are referred to the Contract Documents, including Plan Sheets G-1 through G-4."},
+  ADD2:{t:"Addendum No. 2",m:"Issued July 12, 2024",x:"Addendum No. 2 (issued July 12, 2024) addressed traffic control phasing only."},
+  IDR0312:{t:"Inspector's Daily Report, March 12, 2025",m:"TVTA inspector R. Castillo",x:"Shaft 2A at El. 416: auger refusal on boulder. Driller reports boulder estimated at 3 to 4 ft. Inspector notes \"large boulder, rig unable to advance, contractor discussing options.\" Photos P-112 to P-118 taken."},
+  IDR0313:{t:"Inspector's Daily Report, March 13, 2025",m:"TVTA inspector",x:"Core barrel breaks boulder partially; second boulder encountered at El. 413. Artesian flow observed at El. 412, slurry level difficult to maintain."},
+  MIN26:{t:"Weekly Progress Meeting Minutes No. 26",m:"March 14, 2025",x:"Item 7: \"BHC reports boulders at Pier 2. TVTA to review. BHC to advise on path forward.\""},
+  BHC031:{t:"Letter BHC-031",m:"April 2, 2025",x:"BHC letter to Resident Engineer giving written notice of differing site conditions under GC 4.03."},
+  TVTA044:{t:"Letter TVTA-044",m:"April 9, 2025",x:"TVTA letter acknowledging BHC-031, reserving all rights including untimely notice."},
+  TVTA061:{t:"Letter TVTA-061",m:"June 18, 2025",x:"TVTA denies claim: conditions indicated in Contract; notice untimely."},
+  IDR0224:{t:"Inspector's Daily Report, February 24, 2025",m:"TVTA inspector",x:"Keystone begins Pier 2 shafts with a Bauer BG 28 rig, temporary casing to El. 425 and polymer slurry below."},
+  IDR0407:{t:"Inspector's Daily Report, April 7, 2025",m:"TVTA inspector",x:"Keystone mobilizes casing oscillator and full-length temporary casing."},
+  IDR0424:{t:"Inspector's Daily Report, April 24, 2025",m:"TVTA inspector",x:"Fourth Pier 2 shaft completed to tip."},
+  NOTE3:{t:"Record note on boulder sizes and Pier 3",m:"Record, A-5",x:"Boulder sizes recorded by the inspector on Mar 12 to 21 ranged from 2 ft to approximately 4 ft. Pier 3 shafts (drilled May 2025) encountered occasional cobbles only."}
+};
+
+/* ===================== FINDINGS ===================== */
+const F = [
+ {id:"F1",party:"Contractor",sec:"Sections 3.4 and 4.5",kind:"conflict",label:"Date conflicts with record",
+  short:"Written notice given March 15, 2025",
+  paper:"BHC immediately informed the TVTA inspector on March 12, discussed the condition at the weekly meeting on March 14 (Minutes No. 26, item 7), and provided written notice on March 15, 2025.",
+  paperMark:"provided written notice on March 15, 2025",
+  rec:[{s:"BHC031",mk:"BHC letter to Resident Engineer giving written notice of differing site conditions under GC 4.03."},{s:"MIN26",mk:"BHC reports boulders at Pier 2. TVTA to review."}],
+  note:"No written notice dated March 15 appears in the record. The earliest written notice is Letter BHC-031, dated April 2, 2025. The record shows verbal contact with the inspector on March 12 and a minutes entry on March 14. Section 4.5 of the paper relies on the same date to argue timeliness.",
+  verified:true},
+ {id:"F2",party:"Contractor",sec:"Section 2",kind:"conflict",label:"Clause misquoted",
+  short:"Quotation of GC 4.03(a) omits \"materially\"",
+  paper:"GC 4.03(a) provides that the Contractor is entitled to an adjustment where it encounters \"subsurface or latent physical conditions at the site which differ from those indicated in the Contract.\"",
+  paperMark:"which differ from those indicated in the Contract",
+  diff:true,
+  rec:[{s:"GC403a",mk:"subsurface or latent physical conditions at the site which differ materially from those indicated in the Contract"}],
+  note:"The quoted words do not match the clause. The contract reads \"differ materially from,\" and the omitted word sets the standard the Board applies. The Owner's paper (Section 2) also points this out.",
+  verified:true},
+ {id:"F3",party:"Contractor",sec:"Section 3.1",kind:"conflict",label:"Distance doesn't add up",
+  short:"Boring B-3 \"more than 60 feet\" from Pier 2",
+  paper:"Boring B-3 at Station 12+85 is the only boring representing Pier 2. It was drilled more than 60 feet from the Pier 2 shafts and shows dense sand and gravel with occasional cobbles.",
+  paperMark:"more than 60 feet from the Pier 2 shafts",
+  rec:[{s:"B3",mk:"Station 12+85, 8 ft Lt"},{s:"PIER2",mk:"at Station 13+10"}],
+  calc:"Station 13+10 minus Station 12+85 = 25 ft along the alignment. With the 8 ft left offset, about 26 ft. The record does not give the individual shaft locations, so the distance to the nearest shaft could differ by a few feet.",
+  note:"The stations in the record put B-3 about 25 feet from the Pier 2 centerline, not more than 60.",
+  verified:true},
+ {id:"F4",party:"Owner",sec:"Section 3.2",kind:"conflict",label:"Misstates the boring log",
+  short:"B-3 \"records cobbles and boulders\"",
+  paper:"Boring B-3, the boring nearest Pier 2, records cobbles and boulders in the dense sand and gravel above the siltstone.",
+  paperMark:"records cobbles and boulders",
+  rec:[{s:"B3",mk:"Dense sand and gravel with occasional cobbles; no boulders noted"},{s:"B4",mk:"cobbles and occasional boulders to 24 in."}],
+  note:"The B-3 log records occasional cobbles and states that no boulders were noted. Of the four borings, only B-4, at Abutment 4, records boulders.",
+  verified:true},
+ {id:"F5",party:"Owner",sec:"Section 3.4",kind:"conflict",label:"Wrong document cited",
+  short:"Pre-bid answer attributed to Addendum No. 2",
+  paper:"The Authority's response in Addendum No. 2 directed bidders to the Contract Documents, including the boulder note on Sheet G-1.",
+  paperMark:"Addendum No. 2",
+  rec:[{s:"ADD3",mk:"Q: Does the Authority have any information on boulders at Piers 2 and 3 beyond the boring logs provided?"},{s:"ADD2",mk:"addressed traffic control phasing only"}],
+  note:"The boulder question and answer are Question 14 of Addendum No. 3. Addendum No. 2 covered traffic control phasing only. Note also that the answer refers bidders to Sheets G-1 through G-4 generally; it does not mention the boulder note specifically.",
+  verified:true},
+ {id:"F6",party:"Owner",sec:"Section 4.1",kind:"conflict",label:"Count doesn't add up",
+  short:"Notice was \"fourteen working days\" late",
+  paper:"BHC's first written notice is Letter BHC-031 dated April 2, 2025, fourteen working days after the condition was encountered.",
+  paperMark:"fourteen working days",
+  rec:[{s:"IDR0312",mk:"Shaft 2A at El. 416: auger refusal on boulder."},{s:"BHC031",mk:"BHC letter to Resident Engineer giving written notice"}],
+  calc:"Working days after March 12 through April 2, 2025, Monday to Friday: March 13, 14, 17 to 21, 24 to 28, 31, April 1 and 2 = 15 working days. The record lists no holidays in this period.",
+  note:"The count is 15, not 14. The point the Owner is making, that notice came well after the five working days in GC 4.04, is unaffected.",
+  verified:true},
+ {id:"F7",party:"Owner",sec:"Section 3.5",kind:"conflict",label:"Partly contradicted by own record",
+  short:"Artesian flow \"not supported by any measurement\"",
+  paper:"BHC's reference to artesian flow is not supported by any measurement. The inspector noted slurry level difficulties, which are common in open gravels.",
+  paperMark:"The inspector noted slurry level difficulties",
+  rec:[{s:"IDR0313",mk:"Artesian flow observed at El. 412, slurry level difficult to maintain."}],
+  note:"The Authority's own inspector recorded artesian flow at El. 412, not only slurry difficulties. It is accurate that the record contains no measured pressure. Whether an observation without a measurement is enough is a question for the Board.",
+  verified:true},
+ {id:"F8",party:"Owner",sec:"Section 6",kind:"conflict",label:"Goes beyond the specification",
+  short:"Casing treated as a \"conventional tool\"",
+  paper:"Keystone ultimately removed or advanced through every boulder using rock augers, core barrels and casing, which are conventional tools.",
+  paperMark:"rock augers, core barrels and casing, which are conventional tools",
+  rec:[{s:"SP2064",mk:"conventional drilling tools (earth augers, rock augers, cleanout buckets and core barrels)"},{s:"IDR0407",mk:"Keystone mobilizes casing oscillator and full-length temporary casing."}],
+  note:"SP 206.4 lists earth augers, rock augers, cleanout buckets and core barrels. Casing and the casing oscillator are not on that list. Whether casing is a conventional tool is a matter of interpretation for the Board; the specification does not say so.",
+  verified:true},
+ {id:"F9",party:"Owner",sec:"Section 5",kind:"missing",label:"Not in the package",
+  short:"Relies on SP 206.3 (means and methods)",
+  paper:"The Authority's approval of Submittal 206-02 did not transfer responsibility for means and methods, as SP 206.3 expressly provides.",
+  paperMark:"as SP 206.3 expressly provides",
+  rec:[],
+  note:"SP 206.3 is not among the record excerpts in the referral package, so the quoted effect can't be checked. Consider asking the Authority to furnish it before the meeting.",
+  verified:false},
+ {id:"F10",party:"Contractor",sec:"Section 3.2",kind:"missing",label:"Not in the package",
+  short:"Submittal 206-02 approved January 2025, no boulder concern raised",
+  paper:"Keystone's approved drilled shaft installation plan (Submittal 206-02, approved January 2025) described this method, and TVTA raised no concern about boulders when approving it.",
+  paperMark:"Submittal 206-02, approved January 2025",
+  rec:[],
+  note:"Submittal 206-02 and its approval are not in the record excerpts. The approval date and the absence of boulder comments can't be checked. Consider asking the Contractor to furnish the submittal and the review comments.",
+  verified:false},
+ {id:"C1",party:"Contractor",sec:"Section 4.3",kind:"ok",label:"Consistent",
+  short:"B-4 about 195 feet away; boulders only in B-4",
+  paper:"Boulders appear only in B-4 at Abutment 4, some 195 feet away on the far side of the creek.",
+  paperMark:"Boulders appear only in B-4 at Abutment 4, some 195 feet away",
+  rec:[{s:"B4",mk:"Station 15+05"},{s:"PIER2",mk:"at Station 13+10"}],
+  calc:"Station 15+05 minus Station 13+10 = 195 ft. B-1, B-2 and B-3 logs note no boulders.",
+  note:"Consistent with the plan stations and the four boring logs. \"Far side of the creek\" is not shown in the record excerpts.",
+  verified:true},
+ {id:"C2",party:"Owner",sec:"Section 4.1",kind:"ok",label:"Consistent",
+  short:"Written notice was due by March 19, 2025",
+  paper:"Under GC 4.04, written notice was due by March 19, 2025.",
+  paperMark:"written notice was due by March 19, 2025",
+  rec:[{s:"GC404",mk:"no later than five (5) working days after the Contractor first encounters the condition"}],
+  calc:"Five working days after March 12, 2025: March 13, 14, 17, 18, 19.",
+  note:"Consistent with GC 4.04 and the March 12 encounter date.",
+  verified:true},
+ {id:"C3",party:"Owner",sec:"Section 4.1",kind:"ok",label:"Consistent",
+  short:"First written notice is Letter BHC-031, April 2",
+  paper:"BHC's first written notice is Letter BHC-031 dated April 2, 2025.",
+  paperMark:"Letter BHC-031 dated April 2, 2025",
+  rec:[{s:"BHC031",mk:"BHC letter to Resident Engineer giving written notice of differing site conditions under GC 4.03."}],
+  note:"Consistent with the record. No earlier written notice appears in the excerpts.",
+  verified:true},
+ {id:"C4",party:"Owner",sec:"Section 2",kind:"ok",label:"Consistent",
+  short:"Notes that BHC's quotation omits \"materially\"",
+  paper:"The word \"materially\" is essential and is omitted from BHC's quotation of the clause.",
+  paperMark:"omitted from BHC's quotation of the clause",
+  rec:[{s:"GC403a",mk:"differ materially from those indicated in the Contract"}],
+  note:"Correct. See the Contractor's Section 2 quotation.",
+  verified:true},
+ {id:"C5",party:"Contractor",sec:"Section 4.4",kind:"ok",label:"Consistent",
+  short:"Pre-bid question answered in Addendum No. 3, Question 14",
+  paper:"TVTA said it did not (Addendum No. 3, Question 14).",
+  paperMark:"Addendum No. 3, Question 14",
+  rec:[{s:"ADD3",mk:"A: No additional information is available."}],
+  note:"Consistent. The record does not show which bidder asked the question; the paper says BHC asked it.",
+  verified:true}
+];
+
+/* ===================== CHRONOLOGY ===================== */
+const CHRONO = [
+ {d:"Jul 12, 2024",e:"Addendum No. 2 issued (traffic control phasing).",s:"ADD2",r:"Cited by the Owner for the boulder answer; see statement F5."},
+ {d:"Jul 22, 2024",e:"Addendum No. 3 issued. Question 14 asks about boulders at Piers 2 and 3; answer refers bidders to Sheets G-1 to G-4.",s:"ADD3",r:"Notice to bidders; reliance."},
+ {d:"Feb 24, 2025",e:"Keystone begins Pier 2 shafts with a Bauer BG 28 rig, temporary casing to El. 425 and polymer slurry below.",s:"IDR0224",r:"Method chosen before encounter."},
+ {d:"Mar 12, 2025",e:"Shaft 2A meets auger refusal on a boulder at El. 416, estimated at 3 to 4 ft. Inspector records it and takes photographs.",s:"IDR0312",r:"Condition first encountered. Start of the GC 4.04 notice period."},
+ {d:"Mar 13, 2025",e:"Second boulder at El. 413. Artesian flow observed at El. 412.",s:"IDR0313",r:"Artesian condition; see statement F7."},
+ {d:"Mar 14, 2025",e:"Weekly meeting, item 7: BHC reports boulders at Pier 2; TVTA to review.",s:"MIN26",r:"Possible actual knowledge."},
+ {d:"Mar 15, 2025",e:"Contractor's paper says written notice was given on this date.",s:null,r:"No document in the record; see statement F1.",claimed:true},
+ {d:"Mar 19, 2025",e:"Fifth working day after the encounter. Written notice due under GC 4.04.",s:"GC404",r:"Computed deadline."},
+ {d:"Apr 2, 2025",e:"Letter BHC-031: written notice of differing site conditions under GC 4.03.",s:"BHC031",r:"First written notice, 15 working days after encounter."},
+ {d:"Apr 7, 2025",e:"Casing oscillator and full-length temporary casing mobilized.",s:"IDR0407",r:"Change in method; see statement F8."},
+ {d:"Apr 9, 2025",e:"Letter TVTA-044 acknowledges BHC-031 and reserves rights, including untimely notice.",s:"TVTA044",r:"Owner's response."},
+ {d:"Apr 24, 2025",e:"Fourth Pier 2 shaft completed to tip.",s:"IDR0424",r:"End of affected work."},
+ {d:"May 2025",e:"Pier 3 shafts drilled; occasional cobbles only.",s:"NOTE3",r:"Comparison point raised by the Contractor."},
+ {d:"Jun 18, 2025",e:"Letter TVTA-061 denies the claim: conditions indicated; notice untimely.",s:"TVTA061",r:"Basis of the dispute."}
+];
+
+/* ===================== QUESTIONS ===================== */
+const Q = [
+ {id:"q1",to:"Contractor",t:"Your paper says written notice was given on March 15. The earliest letter in the record is BHC-031 of April 2. Is there a written notice dated March 15? If not, what was communicated on March 12 and 14, and to whom?",b:["F1"]},
+ {id:"q2",to:"Contractor",t:"General Note 6 on Sheet G-1 says boulders may be encountered throughout the alluvium. How did Keystone's bid and installation plan account for that note?",b:[],src:"GN6"},
+ {id:"q3",to:"Contractor",t:"The plan stations put Boring B-3 about 25 feet from the Pier 2 centerline, not more than 60. Does that change how you read B-3 as representative of the Pier 2 shafts?",b:["F3"]},
+ {id:"q4",to:"Contractor",t:"What size and torque rig was on site on March 12, and how does it compare with what SP 206.2 requires? The obstruction definition in SP 206.4 depends on it.",b:[],src:"SP2064"},
+ {id:"q5",to:"Owner",t:"Your paper says Boring B-3 records boulders. The B-3 log says no boulders were noted. Which log entry is the Authority relying on?",b:["F4"]},
+ {id:"q6",to:"Owner",t:"Your inspector recorded artesian flow at El. 412 on March 13. On what basis does the Authority say the condition is unsupported?",b:["F7"]},
+ {id:"q7",to:"Owner",t:"What specifically would the Authority have done differently with written notice on March 19 rather than April 2, given that its inspector recorded the boulder on March 12 and it was discussed at the March 14 meeting?",b:["C2","C3"]},
+ {id:"q8",to:"Owner",t:"SP 206.4 lists conventional tools as earth augers, rock augers, cleanout buckets and core barrels. Why does the Authority consider casing a conventional tool?",b:["F8"]},
+ {id:"q9",to:"Both parties",t:"Pier 3 had no boring and encountered only occasional cobbles. Does that suggest Pier 2 was anomalous, or that conditions vary across the alluvium in a way General Note 6 anticipated?",b:[],src:"NOTE3"},
+ {id:"q10",to:"Both parties",t:"Please furnish SP 206.3 and Submittal 206-02 with its review comments. Both are relied on in the papers but are not in the referral package.",b:["F9","F10"]}
+];
+
+/* ===================== REPORT ===================== */
+const OWNER_TERMS = ["the Department","TVTA's","The Department's","the Department's"];
+let REPORT = {
+ facts:[
+  {by:"Chair",p:[
+   "1. The Contract Documents are listed in GC 1.05(a). Under GC 1.05(b), the factual boring logs on Plan Sheets G-1 through G-4 are Contract Documents; the interpretations in the GDR narrative are not.",
+   "2. Boring B-3, at Station 12+85, is the boring nearest Pier 2. Its log records dense sand and gravel with occasional cobbles and notes no boulders.",
+   "3. Plan Sheet G-1, General Note 6, states that cobbles and boulders may be encountered in alluvial deposits throughout the project limits."]},
+  {by:"Member nominated by the Authority",p:[
+   "4. On 3/12/25, Shaft 2A met auger refusal at El. 416. The Department's inspector recorded a large boulder and took photographs.",
+   "5. Boring B-3 showed cobbles and boulders in the alluvium, consistent with Boring B-4."]},
+  {by:"Member nominated by the Contractor",p:[
+   "6. TVTA's inspector recorded artesian flow at El. 412 on March 13, 2025.",
+   "7. The Contractor's first written notice was Letter BHC-031, dated April 2, 2025, fifteen working days after the condition was first encountered.",
+   "8. Boulders at Pier 2 were reported to the Engineer at the weekly meeting on March 14, 2025."]}
+ ],
+ analysis:[
+  {by:"Chair",p:[
+   "General Note 6 is a general caution applying to the whole project. The Board considered whether it overrides the specific boring log at Pier 2 or is read together with it. [Chair to complete.]",
+   "On notice, written notice was not given within five working days. The Board considered whether the Engineer had actual knowledge, and whether the Authority was prejudiced, under the exception in GC 4.04. [Chair to complete.]"]}
+ ]
+};
+let CHECKS = [
+ {id:"terms",sec:"facts",title:"The Owner is named three ways",body:"The draft uses \"the Authority,\" \"the Department\" and \"TVTA.\" The Contract and both papers use \"the Authority.\"",fix:"Use \"the Authority\" throughout",done:false},
+ {id:"dates",sec:"facts",title:"Dates are written two ways",body:"Item 4 uses 3/12/25; other items use March 13, 2025.",fix:"Use month, day, year throughout",done:false},
+ {id:"b3",sec:"facts",title:"Item 5 isn't supported by the record",body:"The B-3 log notes no boulders, which also conflicts with item 2. This repeats a statement from the Owner's paper (statement F4).",src:"B3",fix:null,done:false},
+ {id:"engineer",sec:"facts",title:"Item 8: who attended isn't in the record",body:"Minutes No. 26 record that BHC reported boulders and TVTA would review. The record doesn't show whether the Engineer was present.",src:"MIN26",fix:null,done:false}
+];
+const COVER = {
+ Contractor:[
+  ["Type I elements: indication, reliance, material difference, impact",false],
+  ["General Note 6 cannot override the specific log",true],
+  ["B-4 and GDR narrative are not indications at Pier 2",false],
+  ["No duty to investigate; pre-bid question answered",false],
+  ["Notice timely, or actual knowledge without prejudice",true],
+  ["Alternative entitlement under SP 206.4",false]],
+ Owner:[
+  ["General Note 6 is an express warning",true],
+  ["Logs showed boulders in the alluvium",false],
+  ["A single boring does not guarantee conditions",false],
+  ["Pre-bid question shows awareness of risk",false],
+  ["Artesian condition unsupported",false],
+  ["Notice untimely under GC 4.04",true],
+  ["Owner prejudiced by late notice",true],
+  ["Means and methods caused the difficulties",false],
+  ["SP 206.4 does not apply",false]]
+};
+
+/* ===================== HELPERS ===================== */
+const $ = s=>document.querySelector(s), $$ = s=>[...document.querySelectorAll(s)];
+const esc = s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function markIn(text, frag, cls){
+  const i = text.indexOf(frag);
+  if(!frag || i<0) return esc(text);
+  return esc(text.slice(0,i))+`<mark${cls?` class="${cls}"`:""}>`+esc(frag)+"</mark>"+esc(text.slice(i+frag.length));
+}
+function toast(m){const t=$("#toast");t.textContent=m;t.style.display="block";clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display="none",2200)}
+const store={get(k,d){try{const v=localStorage.getItem("binder:"+k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem("binder:"+k,JSON.stringify(v))}catch(e){}}};
+
+/* ===================== NAV ===================== */
+function go(v){
+  $$(".view").forEach(s=>s.hidden = s.id!=="v-"+v);
+  $$(".rail button").forEach(b=>b.setAttribute("aria-current", b.dataset.go===v?"page":"false"));
+  window.scrollTo(0,0); $("#main").focus?.();
+}
+$$(".rail button").forEach(b=>b.addEventListener("click",()=>go(b.dataset.go)));
+$$("[data-jump]").forEach(b=>b.addEventListener("click",()=>{setFilter(b.dataset.jump,"all");go("papers")}));
+
+/* ===================== SOURCE DRAWER ===================== */
+function openSrc(id, frag){
+  const s=SRC[id]; if(!s) return;
+  $("#dTitle").textContent=s.t; $("#dMeta").textContent=s.m;
+  $("#dBody").innerHTML=markIn(s.x, frag);
+  const d=$("#drawer"); d.classList.add("open"); d.setAttribute("aria-hidden","false");
+  d.querySelector(".panel button").focus();
+}
+function closeSrc(){const d=$("#drawer");d.classList.remove("open");d.setAttribute("aria-hidden","true")}
+$$("[data-close]").forEach(e=>e.addEventListener("click",closeSrc));
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeSrc()});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-src]");if(b){openSrc(b.dataset.src,b.dataset.frag||"")}});
+
+/* ===================== CHRONOLOGY ===================== */
+$("#chronoBody").innerHTML = CHRONO.map(c=>`<tr class="${c.claimed?"claimed":""}">
+ <td class="date">${c.d}</td><td class="ev">${esc(c.e)}</td>
+ <td>${c.s?`<button class="linkbtn" data-src="${c.s}">${esc(SRC[c.s].t)}</button>`:`<span class="c-red small">None in record</span>`}</td>
+ <td class="small">${esc(c.r)}</td></tr>`).join("");
+
+/* ===================== FINDINGS ===================== */
+let fKind="all", fParty="all", fSel="F1";
+const tagCls = k=>k==="conflict"?"t-conflict":k==="missing"?"t-missing":"t-ok";
+function setFilter(k,p){
+  if(k) fKind=k; if(p) fParty=p;
+  $$("[data-f]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.f===fKind));
+  $$("[data-p]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.p===fParty));
+  const vis=F.filter(f=>(fKind==="all"||f.kind===fKind)&&(fParty==="all"||f.party===fParty));
+  if(!vis.find(f=>f.id===fSel)) fSel = vis[0]?.id;
+  renderList(vis); renderDetail();
+}
+$$("[data-f]").forEach(b=>b.addEventListener("click",()=>setFilter(b.dataset.f,null)));
+$$("[data-p]").forEach(b=>b.addEventListener("click",()=>setFilter(null,b.dataset.p)));
+function renderList(vis){
+  $("#flist").innerHTML = vis.map(f=>`<li><button role="option" aria-selected="${f.id===fSel}" data-id="${f.id}">
+   <span class="who">${f.party}'s paper, ${f.sec}</span><span class="what">${esc(f.short)}</span>
+   <span class="tag ${tagCls(f.kind)}">${f.label}</span></button></li>`).join("") || `<li style="padding:1rem" class="muted">No statements match these filters.</li>`;
+  $$("#flist button").forEach(b=>b.addEventListener("click",()=>{fSel=b.dataset.id;$$("#flist button").forEach(x=>x.setAttribute("aria-selected",x===b));renderDetail();if(window.innerWidth<960)$("#fdetail").scrollIntoView({block:"start"})}));
+}
+function diffHtml(paper, recFrag){
+  // show the word the paper dropped
+  return esc(paper).replace(esc("which differ from those"),`which differ <mark class="redline" title="Missing from the paper's quotation">[materially]</mark> from those`);
+}
+function renderDetail(){
+  const f=F.find(x=>x.id===fSel), el=$("#fdetail");
+  if(!f){el.innerHTML='<p class="muted">Select a statement.</p>';return}
+  const paperHtml = f.diff ? diffHtml(f.paper) : markIn(f.paper, f.paperMark);
+  const recHtml = f.rec.length ? f.rec.map(r=>`<blockquote class="quote">${markIn(SRC[r.s].x, r.mk)}
+     <span class="src">${esc(SRC[r.s].t)}, ${esc(SRC[r.s].m)}. <button class="linkbtn" data-src="${r.s}" data-frag="${esc(r.mk)}">Open full passage</button></span></blockquote>`).join('<div style="height:.6rem"></div>')
+    : `<div class="quote muted">No passage in the referral package matches this citation.</div>`;
+  el.innerHTML = `<div class="head"><h2 style="margin:0">${esc(f.short)}</h2><span class="tag ${tagCls(f.kind)}">${f.label}</span></div>
+   <div class="pair">
+    <div class="pane"><h3>${f.party}'s paper, ${f.sec}</h3><blockquote class="quote">${paperHtml}</blockquote></div>
+    <div class="pane"><h3>What the record says</h3>${recHtml}
+     <div class="verify">${f.verified
+      ?'<span class="dot" style="background:var(--green)"></span><span>Record passages above match the source word for word</span>'
+      :'<span class="dot" style="background:var(--amber)"></span><span>Nothing to verify against; document not provided</span>'}</div></div>
+   </div>
+   ${f.calc?`<div class="calc"><strong style="font-family:var(--ui);font-size:.85rem">Check:</strong> ${esc(f.calc)}</div>`:""}
+   <p class="note">${esc(f.note)}</p>
+   <div class="actions">${Q.filter(q=>q.b.includes(f.id)).map(q=>`<button class="btn" data-q="${q.id}">See related question for the ${q.to==="Both parties"?"parties":q.to}</button>`).join("")}</div>`;
+  $$("[data-q]").forEach(b=>b.addEventListener("click",()=>{go("questions");const t=document.getElementById(b.dataset.q);t?.scrollIntoView({block:"center"});t?.classList.add("changed")}));
+}
+
+/* ===================== QUESTIONS ===================== */
+let qState = store.get("q",{});
+function renderQ(){
+  const groups=["Contractor","Owner","Both parties"];
+  const names={"Contractor":"For the Contractor","Owner":"For the Authority","Both parties":"For both parties"};
+  $("#qwrap").innerHTML = groups.map(g=>`<div class="qgroup"><h2>${names[g]}</h2>${Q.filter(q=>q.to===g).map(q=>{
+    const st=qState[q.id]||{keep:true,note:""};
+    const basis=[...q.b.map(id=>{const f=F.find(x=>x.id===id);return `<button class="linkbtn" data-goto="${id}">${id}: ${esc(f.short)}</button>`}), q.src?`<button class="linkbtn" data-src="${q.src}">${esc(SRC[q.src].t)}</button>`:""].filter(Boolean).join("; ");
+    return `<div class="q ${st.keep?"":"dropped"}" id="${q.id}" data-kept="${st.keep}">
+      <p>${esc(q.t)}</p>
+      ${basis?`<div class="basis">Based on: ${basis}</div>`:""}
+      <div class="row"><button class="btn" data-keep="${q.id}" aria-pressed="${st.keep}">${st.keep?"Set aside":"Keep this question"}</button></div>
+      <label for="n-${q.id}">What you heard at the meeting</label>
+      <textarea id="n-${q.id}" data-note="${q.id}" placeholder="Your notes after the meeting">${esc(st.note||"")}</textarea>
+    </div>`}).join("")}</div>`).join("");
+  $$("[data-keep]").forEach(b=>b.addEventListener("click",()=>{const id=b.dataset.keep;const st=qState[id]||{keep:true,note:""};st.keep=!st.keep;qState[id]=st;store.set("q",qState);renderQ()}));
+  $$("[data-note]").forEach(t=>t.addEventListener("input",()=>{const id=t.dataset.note;const st=qState[id]||{keep:true,note:""};st.note=t.value;qState[id]=st;store.set("q",qState)}));
+  $$("[data-goto]").forEach(b=>b.addEventListener("click",()=>{fSel=b.dataset.goto;setFilter("all","all");go("papers")}));
+}
+$("#printKept").addEventListener("click",()=>{
+  document.body.classList.add("print-kept");
+  doPrint();
+});
+window.addEventListener("afterprint",()=>document.body.classList.remove("print-kept"));
+
+/* ===================== REPORT ===================== */
+let sec="facts";
+$$("[data-sec]").forEach(b=>b.addEventListener("click",()=>{sec=b.dataset.sec;$$("[data-sec]").forEach(x=>x.setAttribute("aria-pressed",x===b));renderReport()}));
+function renderReport(changed){
+  const d=$("#draft");
+  if(sec==="rec"){
+    d.innerHTML=`<h2>Recommendation</h2><div class="empty">This section is written by the Board. Binder does not draft findings on entitlement, analysis or recommendations. When the Board has written it, Binder will check its citations and terms like the rest of the report.</div>`;
+  } else {
+    const items=REPORT[sec];
+    d.innerHTML=`<h2>${sec==="facts"?"Findings of fact":"Analysis"}</h2>`+items.map((c,ci)=>`<div class="contrib"><div class="by">Drafted by: ${c.by}</div>${c.p.map((p,pi)=>{
+      let h=esc(p);
+      if(sec==="facts" && !CHECKS.find(x=>x.id==="b3").done && p.startsWith("5.")) h=`<span class="flag-inline">${h}</span>`;
+      const key=ci+"-"+pi;
+      return `<p class="${changed&&changed.includes(key)?"changed":""}">${h}</p>`}).join("")}</div>`).join("")
+      + (sec==="analysis"?`<div class="empty small">Members nominated by each party have not added to this section yet.</div>`:"");
+  }
+  renderChecks();
+}
+function renderChecks(){
+  const list=CHECKS.filter(c=>c.sec===sec);
+  const cov=(side)=>COVER[side].map(([t,ok])=>`<li><span class="s ${ok?"c-green":"muted"}">${ok?"✓":"○"}</span><span>${esc(t)}</span></li>`).join("");
+  const open=CHECKS.filter(c=>!c.done).length;
+  $("#checks").innerHTML=`<h2>Checks on this draft</h2>
+   <p class="small muted" style="margin-top:-.4rem">${open?open+" open across the report":"All checks resolved"}</p>
+   ${list.length?list.map(c=>`<div class="check ${c.done?"done":""}">
+     <span class="state">${c.done?"Resolved":"Open"}</span><h3>${esc(c.title)}</h3><p>${esc(c.body)}</p>
+     ${c.done?"":`<div style="display:flex;gap:.5rem;flex-wrap:wrap">${c.fix?`<button class="btn primary" data-fix="${c.id}">${esc(c.fix)}</button>`:""}${c.src?`<button class="btn" data-src="${c.src}">Show source</button>`:""}${c.fix?"":`<button class="btn" data-done="${c.id}">Mark reviewed</button>`}</div>`}
+   </div>`).join(""):`<p class="small muted">No checks on this section.</p>`}
+   <div class="check"><h3>Have both parties' arguments been addressed?</h3>
+     <p class="small muted">Many owner agencies expect a report to explain why each position was accepted or rejected.</p>
+     <p class="small" style="margin:.5rem 0 0;font-weight:600">Contractor</p><ul class="cov">${cov("Contractor")}</ul>
+     <p class="small" style="margin:.6rem 0 0;font-weight:600">Authority</p><ul class="cov">${cov("Owner")}</ul></div>`;
+  $$("[data-fix]").forEach(b=>b.addEventListener("click",()=>applyFix(b.dataset.fix)));
+  $$("[data-done]").forEach(b=>b.addEventListener("click",()=>{CHECKS.find(c=>c.id===b.dataset.done).done=true;renderReport();toast("Marked reviewed")}));
+}
+function applyFix(id){
+  const changed=[];
+  REPORT.facts.forEach((c,ci)=>c.p.forEach((p,pi)=>{
+    let n=p;
+    if(id==="terms"){n=n.replace(/The Department's/g,"The Authority's").replace(/the Department's/g,"the Authority's").replace(/TVTA's/g,"The Authority's").replace(/the Department/g,"the Authority")}
+    if(id==="dates"){n=n.replace("On 3/12/25,","On March 12, 2025,")}
+    if(n!==p){c.p[pi]=n;changed.push(ci+"-"+pi)}
+  }));
+  CHECKS.find(c=>c.id===id).done=true;
+  renderReport(changed);
+  toast(id==="terms"?"Changed to \"the Authority\" in "+changed.length+" places":"Dates made consistent");
+}
+
+/* ===================== TOOLS ===================== */
+let fs=store.get("fs",17);
+const applyFs=()=>document.documentElement.style.setProperty("--fs",fs+"px");
+applyFs();
+$("#larger").addEventListener("click",()=>{fs=Math.min(22,fs+1);applyFs();store.set("fs",fs)});
+$("#smaller").addEventListener("click",()=>{fs=Math.max(14,fs-1);applyFs();store.set("fs",fs)});
+function doPrint(){
+  try{window.print()}catch(e){}
+  if(window.self!==window.top) toast("If no print window opened, press Ctrl+P (Cmd+P on a Mac)");
+}
+$("#printBtn").addEventListener("click",doPrint);
+$("#copyDisc").addEventListener("click",async()=>{try{await navigator.clipboard.writeText($("#discText").textContent);toast("Statement copied")}catch(e){toast("Select the text to copy it")}});
+
+$$("[data-next]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.next)));
+/* init */
+setFilter("all","all"); renderQ(); renderReport();
+</script>
+</body>
+</html>
